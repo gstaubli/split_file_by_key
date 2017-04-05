@@ -8,11 +8,11 @@ def remove_nonalnum(in_str):
 def filify_keys(keys):
 	return '_'.join(['{val}'.format(val=remove_nonalnum(str(key).lower())) for key in keys])
 
-def get_new_file_name(keys,in_filename):
-	return '{name}.{keys}.split'.format(name=in_filename,keys=filify_keys(keys))
+def get_new_file_name(filified_key,in_filename):
+	return '{name}.{keys}.split'.format(name=in_filename,keys=filified_key)
 
-def get_new_writer(key,in_filename):
-	out_filename = get_new_file_name(key,in_filename)
+def get_new_writer(filified_key,in_filename):
+	out_filename = get_new_file_name(filified_key,in_filename)
 	return open(out_filename,'wb')
 
 def convert_field_nums_to_ints(fields):
@@ -31,14 +31,14 @@ if __name__ == '__main__':
 
 	with open(args.in_file,'r') as opened_in_file:
 		last_seen_key = None
-		writer = None
+		writers = {}
 		field_nums = convert_field_nums_to_ints(args.fields)
 		for line in opened_in_file:
 			split_line = line.strip(args.line_terminator).split(args.delimiter)
 			current_key = get_values_by_field_nums(split_line,field_nums)
-			if last_seen_key == current_key:
-				writer.write(line)
-			else:
-				last_seen_key = current_key
-				writer = get_new_writer(last_seen_key,args.in_file)
-				writer.write(line)
+			filified_key = filify_keys(current_key)
+			if filified_key not in writers:
+				writers[filified_key] = get_new_writer(filified_key, args.in_file)
+			
+			writer = writers[filified_key]
+			writer.write(line)
